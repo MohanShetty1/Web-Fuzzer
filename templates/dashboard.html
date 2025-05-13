@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Fuzzer Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js">
+    /*    function startFuzzing() {
+            let targetUrl = document.getElementById("targetUrl").value;
+            if (!targetUrl) {
+                alert("Please enter a target URL.");
+                return;
+            }
+
+            fetch("/start_fuzzing", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ target_url: targetUrl })
+            })
+            .then(response => response.json())
+            .then(data => alert(data.message || "Fuzzing started!"))
+            .catch(error => console.error("Error:", error));
+        }*/
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style1.css') }}">
+</head>
+<body>
+    <h1>Web Application Fuzzer</h1>
+    <!--<form>
+        <label for="targetUrl">Enter Target URL:</label>
+        <input type="text" id="targetUrl" placeholder="http://example.com">
+        <button type="button" onclick="startFuzzing()">Start Fuzzing</button>
+    </form> -->
+    <form id="fuzzingForm">
+        <label for="baseUrl">Base URL:</label>
+        <input type="text" id="baseUrl" name="baseUrl" required>
+        <br>
+        <label for="endpoint">Endpoint:</label>
+        <input type="text" id="endpoint" name="endpoint" required>
+        <br>
+        <button type="submit">Start Fuzzing</button>
+    </form>
+
+    <h2>Fuzzing Progress</h2>
+    <div id="progress">Waiting for updates...</div>
+
+    <h2>Report</h2>
+    <a id="reportLink" href="#">Download Report</a>
+
+    <h2>Visualization</h2>
+    <!--<div style="width: 600px">
+        <canvas id="barChart"></canvas>
+        <canvas id="lineChart"></canvas>
+        <canvas id="stackedBarChart"></canvas>
+    </div> -->
+    <div class="chart-container">
+        <canvas id="accuracyChart" ></canvas>
+      </div>
+      
+      <div class="chart-container">
+        <canvas id="progressChart" ></canvas>
+      </div>
+      
+      <div class="chart-container">
+        <canvas id="comparisonChart" ></canvas>
+      </div>
+
+    <script>
+        var socket = io();
+
+        document.getElementById("fuzzingForm").onsubmit = function (event) {
+            event.preventDefault();
+            //let formData = new FormData(event.target);
+            let baseUrl = document.getElementById("baseUrl").value;
+            let endpoint = document.getElementById("endpoint").value;
+            
+            fetch("/start_fuzzing", {
+                method: "POST",
+                //body: formData
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ baseUrl: baseUrl, endpoint: endpoint })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("progress").innerText = "Fuzzing started...";
+            });
+            /*--.catch(error => {
+                document.getElementById("progress").innerText = "Error starting fuzzing.";
+            });*/
+        };
+
+        socket.on("fuzz_progress", function (data) {
+            document.getElementById("progress").innerText = `Progress: ${data.current} / ${data.total}`;
+        });
+
+        socket.on("fuzz_complete", function (data) {
+            document.getElementById("progress").innerText = data.message;
+            let reportLink = document.getElementById("reportLink");
+            reportLink.href = data.report_url;
+            reportLink.style.display = "block";
+            reportLink.innerText = "Download Fuzzing Report";
+
+            renderBarChart();
+            renderLineChart();
+            renderStackedBarChart();
+        });
+
+        function renderBarChart() {
+            new Chart(document.getElementById('accuracyChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Accuracy', 'False Positives'],
+                    datasets: [{
+                        label: 'Fuzzing Accuracy Analysis',
+                        data: [88, 12],
+                        backgroundColor: ['green', 'red']
+                    }]
+                },
+                options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Accuracy vs. False Positives',
+                    color: 'black'
+                },
+                legend: {
+                    labels: { color: 'black' }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: 'black' },
+                    grid: { color: '#444' }
+                },
+                y: {
+                    ticks: { color: 'black' },
+                    grid: { color: '#444' }
+                }
+            }
+        }
+    });
+}
+        
+
+        function renderLineChart() {
+            new Chart(document.getElementById('progressChart'), {
+                type: 'line',
+                data: {
+                    labels: ['0s', '1s', '2s', '3s', '4s', '5s'],
+                    datasets: [{
+                        label: 'Progress',
+                        data: [0, 2, 4, 6, 8, 10],
+                        borderColor: 'blue',
+                        fill: false
+                    }]
+                },
+                options: { responsive: true, plugins: { title: { display: true, text: 'Fuzzing Progress Over Time' } } }
+            });
+        }
+
+        function renderStackedBarChart() {
+            new Chart(document.getElementById('comparisonChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Our Tool', 'Tool A', 'Tool B'],
+                    datasets: [
+                        {
+                            label: 'Successes',
+                            data: [70, 60, 65],
+                            backgroundColor: 'green'
+                        },
+                        {
+                            label: 'Fails',
+                            data: [20, 30, 25],
+                            backgroundColor: 'red'
+                        },
+                        {
+                            label: 'Timeouts',
+                            data: [10, 10, 10],
+                            backgroundColor: 'orange'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: { display: true, text: 'Comparison with Other Tools' },
+                    },
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true }
+                    }
+                }
+            });
+        }
+
+    </script>
+</body>
+</html>

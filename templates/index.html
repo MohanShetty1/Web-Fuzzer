@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Application Fuzzer</title>
+</head>
+<body>
+    <h1>Web Application Fuzzer</h1>
+    <form id="fuzzerForm">
+        <label for="baseUrl">Base URL:</label><br>
+        <input type="text" id="baseUrl" name="baseUrl" placeholder="http://127.0.0.1:5000" required><br><br>
+        
+        <label for="endpoint">Endpoint:</label><br>
+        <input type="text" id="endpoint" name="endpoint" placeholder="e.g., test" required><br><br>
+        
+        <button type="button" onclick="startFuzzing()">Start Fuzzing</button>
+    </form>
+
+    <h2>Results</h2>
+    <div id="results"></div>
+
+    <script>
+        async function startFuzzing() {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const endpoint = document.getElementById('endpoint').value;
+
+            const response = await fetch('/start_fuzzing', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ baseUrl, endpoint })
+            });
+
+            const results = await response.json();
+            document.getElementById('results').innerHTML = `<pre>${JSON.stringify(results, null, 2)}</pre>`;
+        }
+    </script>
+</body>
+</html>
